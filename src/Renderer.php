@@ -16,12 +16,25 @@ class Renderer extends Process
      */
     private function __construct(string $view, array $data = [])
     {
+        $templateDirectory = config('react-email.template_directory');
+        $path = $templateDirectory . '/' . $view;
+
+        $path = realpath($path);
+        if ($path === false) {
+            throw new \InvalidArgumentException('View file not found: ' . $templateDirectory . '/' . $view);
+        }
+
+        $path = str_replace('\\', '/', $path);
+        if (PHP_OS_FAMILY === 'Windows') {
+            $path = 'file:///' . ltrim($path, '/');
+        }
+
         parent::__construct([
             $this->resolveNodeExecutable(),
-            config('react-email.tsx_path') ?? base_path('/node_modules/tsx/dist/cli.mjs'),
-            __DIR__ .'/../render.tsx',
-            config('react-email.template_directory') . $view,
-            json_encode($data)
+            config('react-email.tsx_path') ?? base_path('node_modules/tsx/dist/cli.mjs'),
+            __DIR__ . '/../render.tsx',
+            $path,
+            json_encode($data),
         ], base_path());
     }
 
